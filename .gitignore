@@ -1,0 +1,18 @@
+# Fichiers et dossiers à exclure du référentiel Git
+
+# Dossiers générés par des outils ou frameworks
+/node_modules
+/.vscode
+
+# Fichiers spécifiques à l'environnement de développement
+/config.js
+/package-lock.json
+
+# Fichiers de build ou de distribution
+/build
+/dist
+
+# Fichiers de log, de sauvegarde, de cache, etc.
+*.log
+*.bak
+*.cache
