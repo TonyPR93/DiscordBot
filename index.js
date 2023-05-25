@@ -16,7 +16,9 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessageReactions
 
     ]
 });
@@ -44,14 +46,17 @@ client.on("ready", () => {
 
 client.on("messageCreate", async message =>{
     let msgcnt = message.content.split(/\s+/);
+    const guildId = config.guildId; // ID Serveur
+    const channelId = config.channelId; // ID Salon général
+    const guild = client.guilds.cache.get(guildId);
+    const channel = guild.channels.cache.get(channelId);
     //console.log(msgcnt);
     //console.log(msgcnt[0]);
     //console.log('ok');
     if(message.author.bot) return;
     //console.log(message);
     if(message.content === "ping"){
-        message.reply("pong");
-        message.channel.send("pong");
+
     }
     else if(message.content === "mention"){
         message.reply("Mention d'utilisateur : <@" + message.author.id + "> \n Mention d'un salon : <#" + message.channel.id + ">");
@@ -222,7 +227,7 @@ client.on("messageCreate", async message =>{
 
       // Affiche les prix des tokens pour chaque région
       const responseMessage = tokenPrices.map(tp => `Prix du WoW Token en ${tp.region.toUpperCase()} : ${tp.price/10000} pièces d'or.`).join('\n');
-      message.channel.send(responseMessage + " \nEt nique sa mère la chine");
+      message.channel.send(responseMessage + " \n");
     } catch (error) {
       console.error(error);
       message.channel.send('Une erreur s\'est produite lors de la récupération des prix des WoW Tokens.');
@@ -268,9 +273,7 @@ client.on("messageCreate", async message =>{
     }
       }
 
-    else {
-        message.channel.send("Commande non reconnue");
-    }
+
 
 
 });
@@ -292,4 +295,40 @@ audioPlayer.on('stateChange', (oldState, newState) => {
         channel.send('AudioPlayer off');
     }
 });
+
+client.on('guildMemberAdd', async (member) => {
+    const guild = member.guild;
+    const channel = guild.channels.cache.get(config.charteId);
+  
+    if (!channel) {
+      console.error(`Impossible de trouver le canal avec l'ID ${config.charteId}`);
+      return;
+    }
+  
+    const charterMessage = await channel.send('Voici la charte du serveur. Veuillez l\'accepter en réagissant avec ✅ pour continuer ou avec ❌ pour refuser.');
+  
+    await charterMessage.react('✅');
+    await charterMessage.react('❌');
+    const filter = (reaction, user) => {
+      return ['✅', '❌'].includes(reaction.emoji.name) && user.id === member.user.id;
+    };
+  
+    const collector = charterMessage.createReactionCollector(filter, { max: 1, time: 10000 });
+  
+    collector.on('collect', (reaction, user) => {
+      console.log('Réaction:', reaction.emoji.name, user.id);
+      if (reaction.emoji.name === '✅') {
+        console.log('ok');
+      } else if (reaction.emoji.name === '❌') {
+        console.log('pas ok');
+      }
+    });
+  
+    collector.on('end', (collected) => {
+      if (collected.size === 0) {
+        console.log(`Aucune réaction collectée pour la charte du serveur.`);
+      }
+    });
+  });
+
 client.login(config.tokenBotDiscord);
