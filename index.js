@@ -56,6 +56,10 @@ client.on("messageCreate", async message =>{
     if(message.author.bot) return;
     //console.log(message);
     if(message.content === "ping"){
+                // Réagissez au message avec les emojis '✅' et '❌'
+                //message.react('✅');
+                //message.react('❌');
+        
 
     }
     else if(message.content === "mention"){
@@ -331,4 +335,20 @@ client.on('guildMemberAdd', async (member) => {
     });
   });
 
+
+//   // Événement déclenché lorsqu'une réaction est ajoutée à un message
+// client.on('messageReactionAdd', (reaction, user) => {
+//     // Vérifiez si l'utilisateur est un bot (y compris votre propre bot) pour éviter les boucles
+//     if (user.bot) return;
+
+//     // Vérifiez si la réaction a été ajoutée à un message commençant par "!ping"
+//     if (reaction.message.content.startsWith('ping')) {
+//         // Vérifiez quel emoji a été réagi
+//         if (reaction.emoji.name === '✅') {
+//             console.log('Emoji ✅ réagi');
+//         } else if (reaction.emoji.name === '❌') {
+//             console.log('Emoji ❌ réagi');
+//         }
+//     }
+// });
 client.login(config.tokenBotDiscord);
