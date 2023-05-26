@@ -56,9 +56,45 @@ client.on("messageCreate", async message =>{
     if(message.author.bot) return;
     //console.log(message);
     if(message.content === "ping"){
-                // Réagissez au message avec les emojis '✅' et '❌'
-                //message.react('✅');
-                //message.react('❌');
+        const emojiOui = '✅';
+        const emojiNon = '❌';
+
+        // Envoyez le message avec les emojis
+        const sentMessage = await message.channel.send(`Ping ? ${emojiOui} ${emojiNon}`);
+
+        // Réagissez au message avec les emojis
+        await sentMessage.react(emojiOui);
+        await sentMessage.react(emojiNon);
+
+        // Filtrer les réactions de l'utilisateur
+        const filter = (reaction, user) => [emojiOui, emojiNon].includes(reaction.emoji.name) && !user.bot;
+        const collectora = sentMessage.createReactionCollector({filter, time: 10000 });
+
+        const collectorStatusInterval = setInterval(() => {
+            console.log('État du collecteur :', collectora.ended ? 'Terminé' : 'En cours');
+            console.log(collectora.ended);
+          }, 1000);
+
+        collectora.on('collect', (reaction, user) => {
+            if (reaction.emoji.name === emojiOui) {
+                console.log(`Emoji ✅ réagi ${user.username}`);
+                console.log(user)
+                console.log(collectora)
+            } else if (reaction.emoji.name === emojiNon) {
+                console.log(`Emoji ❌ réagi ${user.username}`);
+                message.channel.send(`Command kick sur ${user.username}`)
+            }
+        });
+
+        collectora.on('end', (collected) => {
+            console.log(`Réactions collectées : ${collected.size}`);
+            if (collected.size === 0) {
+                console.log(`Aucune réaction collectée pour la commande !ping.`);
+            }
+            console.log(collectora)
+            clearInterval(collectorStatusInterval);
+        });
+        
         
 
     }
@@ -126,7 +162,7 @@ client.on("messageCreate", async message =>{
         return message.reply("Veuillez rejoindre un canal vocal avant de jouer de la musique.");
     }
 
-    const musicURL = "INSEREZ LIEN YOUTUBE RANDOM";
+    const musicURL = "https://www.youtube.com/watch?v=QBz4ctlYksQ";
 
     const voiceChannel = message.member.voice.channel;
     const connection = joinVoiceChannel({
@@ -303,6 +339,16 @@ audioPlayer.on('stateChange', (oldState, newState) => {
 client.on('guildMemberAdd', async (member) => {
     const guild = member.guild;
     const channel = guild.channels.cache.get(config.charteId);
+    const roleNew = member.guild.roles.cache.find(role => role.name === 'New');
+    const roleConfirmed = member.guild.roles.cache.find(role => role.name === 'Confirmed');
+
+    member.roles.set([roleNew])
+        .then(() => {
+            console.log(`Les rôles du membre ${member.user.tag} ont été remplacés par le rôle "New".`);
+        })
+        .catch(error => {
+            console.error(`Erreur lors du remplacement des rôles : ${error}`);
+        });
   
     if (!channel) {
       console.error(`Impossible de trouver le canal avec l'ID ${config.charteId}`);
@@ -317,14 +363,21 @@ client.on('guildMemberAdd', async (member) => {
       return ['✅', '❌'].includes(reaction.emoji.name) && user.id === member.user.id;
     };
   
-    const collector = charterMessage.createReactionCollector(filter, { max: 1, time: 10000 });
+    const collector = charterMessage.createReactionCollector({filter, max: 1, time: 100000 });
   
     collector.on('collect', (reaction, user) => {
       console.log('Réaction:', reaction.emoji.name, user.id);
       if (reaction.emoji.name === '✅') {
-        console.log('ok');
+        member.roles.set([roleConfirmed])
+        .then(() => {
+          console.log(`Le rôle "Confirmed" a été attribué à ${member.user.tag}`);
+        })
+        .catch(error => {
+          console.error(`Erreur lors de l'attribution du rôle : ${error}`);
+        });
       } else if (reaction.emoji.name === '❌') {
-        console.log('pas ok');
+        console.log(`L'utilisateur ${member.user.tag} n'a pas accepté la charte dans le délai imparti.`);
+        member.kick(); // En cas de non-acceptation de la charte, l'utilisateur est exclu du serveur
       }
     });
   
